@@ -1,80 +1,163 @@
-# FastAPI Beyond CRUD 
+# 🚀 FastAPI Async Beyond CRUD
 
-This is the source code for the [FastAPI Beyond CRUD](https://youtube.com/playlist?list=PLEt8Tae2spYnHy378vMlPH--87cfeh33P&si=rl-08ktaRjcm2aIQ) course. The course focuses on FastAPI development concepts that go beyond the basic CRUD operations.
+This is a modernized and asynchronous version of the **FastAPI Beyond CRUD** project.  
+It demonstrates advanced backend development concepts in **FastAPI**, including authentication, background tasks with Celery, async database handling, and more — going far beyond basic CRUD operations.
 
-For more details, visit the project's [website](https://jod35.github.io/fastapi-beyond-crud-docs/site/).
+---
 
-## Table of Contents
+## 📚 Table of Contents
+1. [Overview](#overview)
+2. [Features](#features)
+3. [Tech Stack](#tech-stack)
+4. [Getting Started](#getting-started)
+5. [Running the Application](#running-the-application)
+6. [Running Tests](#running-tests)
+7. [Project Structure](#project-structure)
+8. [Contributing](#contributing)
 
-1. [Getting Started](#getting-started)
-2. [Prerequisites](#prerequisites)
-3. [Project Setup](#project-setup)
-4. [Running the Application](#running-the-application)
-5. [Running Tests](#running-tests)
-6. [Contributing](#contributing)
+---
 
-## Getting Started
-Follow the instructions below to set up and run your FastAPI project.
+## 🧩 Overview
 
-### Prerequisites
-Ensure you have the following installed:
+This project focuses on **async FastAPI development** with production-ready architecture:
+- Uses **SQLModel** with **Alembic** migrations.
+- Supports **JWT authentication**.
+- Integrates **Celery + Redis** for background tasks (like sending emails).
+- Uses **Neon PostgreSQL** as a managed database.
+- Includes email verification and scalable Docker setup.
 
-- Python >= 3.10
-- PostgreSQL
-- Redis
+---
 
-### Project Setup
-1. Clone the project repository:
-    ```bash
-    git clone https://github.com/jod35/fastapi-beyond-CRUD.git
-    ```
-   
-2. Navigate to the project directory:
-    ```bash
-    cd fastapi-beyond-CRUD/
-    ```
+## ✨ Features
+- 🔐 JWT Authentication (Access & Refresh tokens)
+- 📧 Email Verification with Celery
+- 📚 Async SQLModel + Alembic migrations
+- 🐘 PostgreSQL (Neon Cloud)
+- 🐳 Docker support for production
+- 🧪 Unit testing with Pytest
 
-3. Create and activate a virtual environment:
-    ```bash
-    python3 -m venv env
-    source env/bin/activate
-    ```
+---
 
-4. Install the required dependencies:
-    ```bash
-    pip install -r requirements.txt
-    ```
+## ⚙️ Tech Stack
+- **FastAPI** — Async Python web framework  
+- **SQLModel** — ORM based on SQLAlchemy  
+- **Alembic** — Database migrations  
+- **Celery** — Background task queue  
+- **Redis** — Message broker for Celery  
+- **PostgreSQL (Neon)** — Cloud database  
+- **Docker** — Containerized deployment  
 
-5. Set up environment variables by copying the example configuration:
-    ```bash
-    cp .env.example .env
-    ```
+---
 
-6. Run database migrations to initialize the database schema:
-    ```bash
-    alembic upgrade head
-    ```
+## 🚀 Getting Started
 
-7. Open a new terminal and ensure your virtual environment is active. Start the Celery worker (Linux/Unix shell):
-    ```bash
-    sh runworker.sh
-    ```
+### 1️⃣ Clone the repository
+```bash
+git clone https://github.com/kuldeepghorpade05/fastapi-async-beyond-crud.git
+cd fastapi-async-beyond-crud
+````
 
-## Running the Application
-Start the application:
+### 2️⃣ Create a virtual environment
+
+```bash
+python3 -m venv venv
+source venv/bin/activate
+```
+
+### 3️⃣ Install dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+### 4️⃣ Configure environment variables
+
+Copy the example file and fill in your values:
+
+```bash
+cp .env.example .env
+```
+
+### 5️⃣ Apply database migrations
+
+```bash
+alembic upgrade head
+```
+
+### 6️⃣ Start Celery worker (for email/background tasks)
+
+```bash
+sh runworker.sh
+```
+
+---
+
+## 🧠 Running the Application
+
+### Run locally (development)
 
 ```bash
 fastapi dev src/
 ```
-Alternatively, you can run the application using Docker:
+
+### Or using Uvicorn
+
+```bash
+uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+### Or with Docker
+
 ```bash
 docker compose up -d
 ```
-## Running Tests
-Run the tests using this command
+
+---
+
+## 🧪 Running Tests
+
+Run all test cases:
+
 ```bash
 pytest
 ```
 
-## Contributing
-I welcome contributions to improve the documentation! You can contribute [here](https://github.com/jod35/fastapi-beyond-crud-docs).
+---
+
+## 🗂️ Project Structure
+
+```
+fastapi-async-beyond-crud/
+│
+├── alembic.ini
+├── compose.yml
+├── requirements.txt
+├── runworker.sh
+├── Dockerfile
+├── .env.example
+│
+├── src/
+│   ├── auth/              # Authentication and JWT logic
+│   ├── db/                # Database models and connection
+│   ├── mail/              # Email templates and Celery tasks
+│   ├── routes/            # API endpoints
+│   ├── core/              # Config and constants
+│   └── main.py            # App entry point
+│
+└── migrations/            # Alembic migration files
+```
+
+---
+
+## 🤝 Contributing
+
+Contributions, suggestions, and improvements are welcome!
+
+Fork the repo and create a PR:
+👉 [https://github.com/kuldeepghorpade05/fastapi-async-beyond-crud](https://github.com/kuldeepghorpade05/fastapi-async-beyond-crud)
+
+---
+
+### ⭐ If you find this project helpful, give it a star on GitHub!
+
+
