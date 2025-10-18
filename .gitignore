@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Environment files
+.env
+.env.*
+
+# Build & cache
+*.log
+*.egg-info/
+dist/
+build/
+.cache/
+.pytest_cache/
+
+# IDEs & editors
+.vscode/
+.idea/
+
+# Node (optional frontend or assets)
+node_modules/
+
+# Misc
+.DS_Store
