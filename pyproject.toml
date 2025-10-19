@@ -3,7 +3,7 @@ name = "fastapi-beyond-crud"
 version = "0.1.0"
 description = ""
 authors = [
-    {name = "kuldeep ghorpade",email = "kuldeepghorpade05@gmail.com"}
+    { name = "kuldeep ghorpade", email = "kuldeepghorpade05@gmail.com" }
 ]
 readme = "README.md"
 requires-python = ">=3.13,<4.0"
@@ -18,15 +18,17 @@ dependencies = [
     "itsdangerous (>=2.2.0,<3.0.0)",
     "python-dotenv (>=1.1.1,<2.0.0)",
     "pyjwt (>=2.10.1,<3.0.0)",
-    "passlib (>=1.7.4,<2.0.0)",
+    "passlib[bcrypt] (>=1.7.4,<2.0.0)",
     "fastapi-mail (>=1.4.1,<2.0.0)",
     "httpx (>=0.28.0,<0.29.0)",
     "aiofiles (>=24.1.0,<25.0.0)",
     "aiohttp (>=3.10.5,<4.0.0)",
     "python-multipart (>=0.0.20,<1.0.0)",
-    "asgiref (>=3.8.1,<4.0.0)"
+    "asgiref (>=3.8.1,<4.0.0)",
+    "bcrypt (==4.0.0)"
 ]
 
+package-mode = false
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]

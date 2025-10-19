@@ -1,121 +1,106 @@
-from datetime import datetime, timedelta
+from datetime import timedelta, datetime
 
-from fastapi import APIRouter, Depends, status, BackgroundTasks
-from fastapi.exceptions import HTTPException
+from fastapi import APIRouter, Depends, status, HTTPException
 from fastapi.responses import JSONResponse
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from src.db.main import get_session
 from src.db.redis import add_jti_to_blocklist
-
-from .dependencies import (
-    AccessTokenBearer,
-    RefreshTokenBearer,
-    RoleChecker,
-    get_current_user,
-)
-from .schemas import (
-    UserBooksModel,
-    UserCreateModel,
-    UserLoginModel,
-    EmailModel,
-    PasswordResetRequestModel,
-    PasswordResetConfirmModel,
-)
-from .service import UserService
-from .utils import (
-    create_access_token,
-    verify_password,
-    generate_passwd_hash,
-    create_url_safe_token,
-    decode_url_safe_token,
-)
-from src.errors import UserAlreadyExists, UserNotFound, InvalidCredentials, InvalidToken
-from src.config import Config
 from src.celery_tasks import send_email
+from src.config import Config
+
+from .dependencies import AccessTokenBearer, RefreshTokenBearer, RoleChecker, get_current_user
+from .schemas import UserCreateModel, UserLoginModel, EmailModel, PasswordResetRequestModel, PasswordResetConfirmModel, UserBooksModel
+from .service import UserService
+from .utils import create_access_token, verify_password, generate_passwd_hash, create_url_safe_token, decode_url_safe_token
+from src.errors import UserAlreadyExists, UserNotFound, InvalidToken, InvalidCredentials
 
 auth_router = APIRouter()
 user_service = UserService()
 role_checker = RoleChecker(["admin", "user"])
-
-
 REFRESH_TOKEN_EXPIRY = 2
 
 
-# Bearer Token
-
+# =========================
+# Test Email Endpoint
+# =========================
 @auth_router.post("/send_mail")
 async def send_mail(emails: EmailModel):
-    emails = emails.addresses
-
+    """
+    Test endpoint to send an email using Celery
+    """
+    recipients = emails.addresses
     html = "<h1>Welcome to the app</h1>"
     subject = "Welcome to our app"
 
-    send_email.delay(emails, subject, html)
+    send_email.delay(recipients, subject, html)
 
     return {"message": "Email sent successfully"}
 
 
+# =========================
+# Signup Endpoint
+# =========================
 @auth_router.post("/signup", status_code=status.HTTP_201_CREATED)
-async def create_user_Account(
-    user_data: UserCreateModel,
-    bg_tasks: BackgroundTasks,
-    session: AsyncSession = Depends(get_session),
-):
-    """
-    Create user account using email, username, first_name, last_name
-    params:
-        user_data: UserCreateModel
-    """
+async def create_user_account(user_data: UserCreateModel, session: AsyncSession = Depends(get_session)):
     email = user_data.email
-
     user_exists = await user_service.user_exists(email, session)
-
     if user_exists:
         raise UserAlreadyExists()
 
     new_user = await user_service.create_user(user_data, session)
 
+    # Generate verification token
     token = create_url_safe_token({"email": email})
-
     link = f"{Config.DOMAIN}/api/v1/auth/verify/{token}"
 
-    # For local testing: print link to console
-    print("VERIFY LINK:", link)
-
-
-    # html = f"""
-    # <h1>Verify your Email</h1>
-    # <p>Please click this <a href="{link}">link</a> to verify your email</p>
-    # """
-
-    # emails = [email]
-
-    # subject = "Verify Your email"
-
-    # send_email.delay(emails, subject, html)
+    # Send verification email asynchronously via Celery
+    subject = "Verify Your Email"
+    html = f"""
+    <h1>Verify your Email</h1>
+    <p>Click this link to verify your account:</p>
+    <a href="{link}">{link}</a>
+    """
+    send_email.delay([email], subject, html)
 
     return {
-        "message": "Account Created! Check console for verification link (email sending skipped)",
+        "message": "Account created! Verification email sent.",
         "user": new_user,
-        "verification_link": link  # you can also return link in response for testing
+        "verification_link": link,  # optional, for testing
     }
 
 
+# =========================
+# Email Verification Endpoint
+# =========================
 @auth_router.get("/verify/{token}")
 async def verify_user_account(token: str, session: AsyncSession = Depends(get_session)):
-
     token_data = decode_url_safe_token(token)
-
     user_email = token_data.get("email")
 
     if user_email:
         user = await user_service.get_user_by_email(user_email, session)
-
         if not user:
             raise UserNotFound()
 
+        # Check if already verified
+        if user.is_verified:
+            return JSONResponse(
+                content={"message": "Account already verified"},
+                status_code=status.HTTP_200_OK,
+            )
+
+        # Update user as verified
         await user_service.update_user(user, {"is_verified": True}, session)
+
+        # Send confirmation email asynchronously via Celery
+        subject = "Your Account is Verified!"
+        html = f"""
+        <h1>Account Verified</h1>
+        <p>Hi {user.first_name},</p>
+        <p>Your account has been successfully verified. You can now log in!</p>
+        """
+        send_email.delay([user_email], subject, html)
 
         return JSONResponse(
             content={"message": "Account verified successfully"},
@@ -123,161 +108,95 @@ async def verify_user_account(token: str, session: AsyncSession = Depends(get_se
         )
 
     return JSONResponse(
-        content={"message": "Error occured during verification"},
+        content={"message": "Error occurred during verification"},
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
     )
 
 
+# =========================
+# Login Endpoint
+# =========================
 @auth_router.post("/login")
-async def login_users(
-    login_data: UserLoginModel, session: AsyncSession = Depends(get_session)
-):
+async def login_users(login_data: UserLoginModel, session: AsyncSession = Depends(get_session)):
     email = login_data.email
     password = login_data.password
 
     user = await user_service.get_user_by_email(email, session)
-
     if user is None:
-        return JSONResponse(
-            content={"message": f"User with email '{email}' not found"},
-            status_code=status.HTTP_404_NOT_FOUND,
-        )
+        raise UserNotFound()
 
-    password_valid = verify_password(password, user.password_hash)
-    if not password_valid:
-        return JSONResponse(
-            content={"message": "Incorrect password"},
-            status_code=status.HTTP_401_UNAUTHORIZED,
-        )
+    if not verify_password(password, user.password_hash):
+        raise InvalidCredentials()
 
-    # Optional: check if user is verified
     if not user.is_verified:
         return JSONResponse(
             content={"message": "Account not verified. Please check your email."},
             status_code=status.HTTP_403_FORBIDDEN,
         )
 
-    access_token = create_access_token(
-        user_data={
-            "email": user.email,
-            "user_uid": str(user.uid),
-            "role": user.role,
-        }
-    )
+    access_token = create_access_token({
+        "email": user.email,
+        "user_uid": str(user.uid),
+        "role": user.role,
+    })
 
-    refresh_token = create_access_token(
-        user_data={"email": user.email, "user_uid": str(user.uid)},
-        refresh=True,
-        expiry=timedelta(days=REFRESH_TOKEN_EXPIRY),
-    )
+    refresh_token = create_access_token({
+        "email": user.email,
+        "user_uid": str(user.uid)
+    }, refresh=True, expiry=timedelta(days=REFRESH_TOKEN_EXPIRY))
 
-    return JSONResponse(
-        content={
-            "message": "Login successful",
-            "access_token": access_token,
-            "refresh_token": refresh_token,
-            "user": {"email": user.email, "uid": str(user.uid)},
-        }
-    )
+    return {
+        "message": "Login successful",
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "user": {"email": user.email, "uid": str(user.uid)},
+    }
 
 
-
-@auth_router.get("/refresh_token")
-async def get_new_access_token(token_details: dict = Depends(RefreshTokenBearer())):
-    expiry_timestamp = token_details["exp"]
-
-    if datetime.fromtimestamp(expiry_timestamp) > datetime.now():
-        new_access_token = create_access_token(user_data=token_details["user"])
-
-        return JSONResponse(content={"access_token": new_access_token})
-
-    raise InvalidToken
-
-
-@auth_router.get("/me", response_model=UserBooksModel)
-async def get_current_user(
-    user=Depends(get_current_user), _: bool = Depends(role_checker)
-):
-    return user
-
-
-@auth_router.get("/logout")
-async def revoke_token(token_details: dict = Depends(AccessTokenBearer())):
-    jti = token_details["jti"]
-
-    await add_jti_to_blocklist(jti)
-
-    return JSONResponse(
-        content={"message": "Logged Out Successfully"}, status_code=status.HTTP_200_OK
-    )
-
-
-
+# =========================
+# Password Reset Request
+# =========================
 @auth_router.post("/password-reset-request")
 async def password_reset_request(email_data: PasswordResetRequestModel):
     email = email_data.email
-
-    # Create a token for password reset
     token = create_url_safe_token({"email": email})
-
-    # Construct reset link
     link = f"{Config.DOMAIN}/api/v1/auth/password-reset-confirm/{token}"
 
-    # Print link in console for testing
-    print("PASSWORD RESET LINK:", link)
-
-    # Optional: prepare email content (not sending in console test)
+    subject = "Reset Your Password"
     html_message = f"""
     <h1>Reset Your Password</h1>
-    <p>Please click this <a href="{link}">link</a> to Reset Your Password</p>
+    <p>Click this link to reset your password:</p>
+    <a href="{link}">{link}</a>
     """
-    subject = "Reset Your Password"
+    send_email.delay([email], subject, html_message)
 
-    # Uncomment the next line if you want to send via Celery
-    # send_email.delay([email], subject, html_message)
-
-    return JSONResponse(
-        content={
-            "message": "Password reset link generated! Check console for the link.",
-            "reset_link": link  # also return link in response for easier testing
-        },
-        status_code=status.HTTP_200_OK,
-    )
+    return {
+        "message": "Password reset email sent! Check your inbox.",
+        "reset_link": link,  # optional, for testing
+    }
 
 
+# =========================
+# Password Reset Confirmation
+# =========================
 @auth_router.post("/password-reset-confirm/{token}")
-async def reset_account_password(
-    token: str,
-    passwords: PasswordResetConfirmModel,
-    session: AsyncSession = Depends(get_session),
-):
+async def reset_account_password(token: str, passwords: PasswordResetConfirmModel, session: AsyncSession = Depends(get_session)):
     new_password = passwords.new_password
     confirm_password = passwords.confirm_new_password
-
     if new_password != confirm_password:
-        raise HTTPException(
-            detail="Passwords do not match", status_code=status.HTTP_400_BAD_REQUEST
-        )
+        raise HTTPException(status_code=400, detail="Passwords do not match")
 
     token_data = decode_url_safe_token(token)
-
     user_email = token_data.get("email")
 
     if user_email:
         user = await user_service.get_user_by_email(user_email, session)
-
         if not user:
             raise UserNotFound()
 
         passwd_hash = generate_passwd_hash(new_password)
         await user_service.update_user(user, {"password_hash": passwd_hash}, session)
 
-        return JSONResponse(
-            content={"message": "Password reset Successfully"},
-            status_code=status.HTTP_200_OK,
-        )
+        return {"message": "Password reset successfully"}
 
-    return JSONResponse(
-        content={"message": "Error occured during password reset."},
-        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-    )
+    raise HTTPException(status_code=500, detail="Error occurred during password reset.")

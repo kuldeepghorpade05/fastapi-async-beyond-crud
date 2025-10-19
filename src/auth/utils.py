@@ -8,17 +8,26 @@ from passlib.context import CryptContext
 
 from src.config import Config
 
-passwd_context = CryptContext(schemes=["bcrypt"])
-
+passwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 ACCESS_TOKEN_EXPIRY = 3600
 
 
 def generate_passwd_hash(password: str) -> str:
-    return passwd_context.hash(password)
+    """
+    Generates a bcrypt hash for the password.
+    Ensures password is <= 72 bytes (UTF-8 safe).
+    """
+    truncated_bytes = password.encode("utf-8")[:72]  # keep as bytes
+    return passwd_context.hash(truncated_bytes)
 
 
 def verify_password(password: str, hash: str) -> bool:
-    return passwd_context.verify(password, hash)
+    """
+    Verifies a password against a bcrypt hash.
+    Truncates password to 72 bytes to match hashing.
+    """
+    truncated_bytes = password.encode("utf-8")[:72]  # keep as bytes
+    return passwd_context.verify(truncated_bytes, hash)
 
 
 def create_access_token(
@@ -26,7 +35,8 @@ def create_access_token(
 ):
     payload = {
         "user": user_data,
-        "exp": datetime.now() + (expiry if expiry is not None else timedelta(seconds=ACCESS_TOKEN_EXPIRY)),
+        "exp": datetime.now()
+        + (expiry if expiry is not None else timedelta(seconds=ACCESS_TOKEN_EXPIRY)),
         "jti": str(uuid.uuid4()),
         "refresh": refresh,
     }
@@ -40,7 +50,9 @@ def create_access_token(
 
 def decode_token(token: str) -> dict:
     try:
-        return jwt.decode(token, key=Config.JWT_SECRET, algorithms=[Config.JWT_ALGORITHM])
+        return jwt.decode(
+            token, key=Config.JWT_SECRET, algorithms=[Config.JWT_ALGORITHM]
+        )
     except jwt.PyJWTError as e:
         logging.exception(e)
         return None
