@@ -7,15 +7,15 @@ from sqlalchemy.orm import sessionmaker
 from src.config import Config
 from typing import AsyncGenerator
 
-# ✅ Improved async engine for Neon PostgreSQL
+# Improved async engine for Neon PostgreSQL
 async_engine: AsyncEngine = create_async_engine(
     Config.DATABASE_URL,
     echo=True,  # logs SQL statements
     connect_args={"ssl": True},
-    pool_pre_ping=True,      # ✅ tests connection before using it
-    pool_recycle=1800,       # ✅ recycles every 30 mins
-    pool_size=5,             # ✅ small pool for async apps
-    max_overflow=10          # ✅ allows extra connections when needed
+    pool_pre_ping=True,      # tests connection before using it
+    pool_recycle=1800,       # recycles every 30 mins
+    pool_size=5,             # small pool for async apps
+    max_overflow=10          # allows extra connections when needed
 )
 
 # Async session factory
