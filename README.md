@@ -1,126 +1,185 @@
 # 🚀 FastAPI Async Beyond CRUD
 
-This is a modernized and asynchronous version of the **FastAPI Beyond CRUD** project.  
-It demonstrates advanced backend development concepts in **FastAPI**, including authentication, background tasks with Celery, async database handling, and more — going far beyond basic CRUD operations.
+A **production-ready, asynchronous FastAPI backend**, deployed on **AWS EC2** using **Docker Compose**, secured via **Nginx + Certbot**, and running under a **DuckDNS** domain.
+
+This project goes **beyond CRUD**, implementing real-world backend features such as **JWT authentication**, **async database operations**, and **email verification using Celery and Redis**.
 
 ---
 
 ## 📚 Table of Contents
+
 1. [Overview](#overview)
 2. [Features](#features)
 3. [Tech Stack](#tech-stack)
 4. [Getting Started](#getting-started)
 5. [Running the Application](#running-the-application)
-6. [Running Tests](#running-tests)
-7. [Project Structure](#project-structure)
-8. [Contributing](#contributing)
+6. [Docker Deployment](#docker-deployment)
+7. [Nginx + HTTPS Setup](#nginx--https-setup)
+8. [Project Structure](#project-structure)
+9. [Contributing](#contributing)
 
 ---
 
 ## 🧩 Overview
 
-This project focuses on **async FastAPI development** with production-ready architecture:
-- Uses **SQLModel** with **Alembic** migrations.
-- Supports **JWT authentication**.
-- Integrates **Celery + Redis** for background tasks (like sending emails).
-- Uses **Neon PostgreSQL** as a managed database.
-- Includes email verification and scalable Docker setup.
+This version of **FastAPI Async Beyond CRUD** is optimized for **production environments** and demonstrates modern **asynchronous backend development** best practices.
+
+* 🐳 Fully containerized using **Docker + Docker Compose**
+* 🔒 Secured with **Nginx + Certbot (HTTPS)**
+* ⚙️ **Redis + Celery** for background task handling (email verification)
+* 🧱 **SQLAlchemy + Alembic** for ORM and database migrations
+* 🐘 **Neon PostgreSQL** as the production database
+* 📦 **Poetry** for dependency management
+* ☁️ Hosted on **AWS EC2**
+* 🌐 Domain handled by **DuckDNS**
 
 ---
 
 ## ✨ Features
-- 🔐 JWT Authentication (Access & Refresh tokens)
-- 📧 Email Verification with Celery
-- 📚 Async SQLModel + Alembic migrations
-- 🐘 PostgreSQL (Neon Cloud)
-- 🐳 Docker support for production
-- 🧪 Unit testing with Pytest
+
+* 🔐 **JWT Authentication** (Access & Refresh Tokens)
+* 📧 **Email Verification** with **Celery + Redis**
+* ⚡ **Async SQLAlchemy ORM** and **Alembic Migrations**
+* 🐘 **PostgreSQL (Neon Cloud)** for scalable database hosting
+* 🐳 **Docker Compose** setup for FastAPI, Redis, and Celery containers
+* 🌐 **Nginx + Certbot** for secure HTTPS deployment
+* ☁️ **AWS EC2** hosting with **DuckDNS** domain support
+* 🧰 **Poetry** for dependency and environment management
 
 ---
 
 ## ⚙️ Tech Stack
-- **FastAPI** — Async Python web framework  
-- **SQLModel** — ORM based on SQLAlchemy  
-- **Alembic** — Database migrations  
-- **Celery** — Background task queue  
-- **Redis** — Message broker for Celery  
-- **PostgreSQL (Neon)** — Cloud database  
-- **Docker** — Containerized deployment  
+
+| Category               | Technologies            |
+| ---------------------- | ----------------------- |
+| **Framework**          | FastAPI (Async)         |
+| **ORM + Migrations**   | SQLAlchemy + Alembic    |
+| **Task Queue**         | Celery                  |
+| **Message Broker**     | Redis                   |
+| **Database**           | PostgreSQL (Neon Cloud) |
+| **Web Server + SSL**   | Nginx + Certbot         |
+| **Containerization**   | Docker + Docker Compose |
+| **Dependency Manager** | Poetry                  |
+| **Hosting**            | AWS EC2                 |
+| **Domain**             | DuckDNS                 |
 
 ---
 
 ## 🚀 Getting Started
 
-### 1️⃣ Clone the repository
+### 1️⃣ Clone the Repository
+
 ```bash
 git clone https://github.com/kuldeepghorpade05/fastapi-async-beyond-crud.git
 cd fastapi-async-beyond-crud
-````
+```
 
-### 2️⃣ Create a virtual environment
+### 2️⃣ (Optional) Create a Virtual Environment
 
 ```bash
 python3 -m venv venv
 source venv/bin/activate
 ```
 
-### 3️⃣ Install dependencies
+### 3️⃣ Install Dependencies Using Poetry
 
 ```bash
-pip install -r requirements.txt
+poetry install
 ```
 
-### 4️⃣ Configure environment variables
-
-Copy the example file and fill in your values:
+### 4️⃣ Configure Environment Variables
 
 ```bash
 cp .env.example .env
 ```
 
-### 5️⃣ Apply database migrations
+Fill in your configuration values:
+
+* `DATABASE_URL` → Neon PostgreSQL connection string
+* `REDIS_URL` → Redis connection URL
+* `SECRET_KEY` → JWT secret key
+* `MAIL_USERNAME`, `MAIL_PASSWORD`, etc.
+
+### 5️⃣ Apply Database Migrations
 
 ```bash
 alembic upgrade head
 ```
 
-### 6️⃣ Start Celery worker (for email/background tasks)
+### 6️⃣ Start Celery Worker for Background Tasks
 
 ```bash
 sh runworker.sh
 ```
 
+Celery handles:
+
+* Sending verification emails
+* Running asynchronous background tasks
+
 ---
 
-## 🧠 Running the Application
+## 🧠 Running the Application (Local)
 
-### Run locally (development)
+### Using FastAPI Dev Mode
 
 ```bash
 fastapi dev src/
 ```
 
-### Or using Uvicorn
+### Or with Uvicorn
 
 ```bash
 uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-### Or with Docker
+Access at:
+👉 [http://localhost:8000/docs](http://localhost:8000/docs)
+
+---
+
+## 🐳 Docker Deployment
+
+### Build and Run Containers
 
 ```bash
-docker compose up -d
+docker compose up -d --build
+```
+
+This starts:
+
+* 🧩 **FastAPI container** (backend app)
+* 🔁 **Redis container** (message broker)
+* ⚙️ **Celery container** (background worker)
+* 🌐 **Nginx container** (reverse proxy + HTTPS via Certbot)
+
+Check running containers:
+
+```bash
+docker ps
+```
+
+Stop all services:
+
+```bash
+docker compose down
 ```
 
 ---
 
-## 🧪 Running Tests
+## 🔒 Nginx + HTTPS Setup
 
-Run all test cases:
+The application runs securely through **Nginx**, with **Certbot** managing SSL certificates for your **DuckDNS** domain.
 
-```bash
-pytest
-```
+### Key Highlights
+
+1. **Nginx** forwards all traffic from ports `80/443` → FastAPI container (`8000`)
+2. **Certbot** automatically issues and renews SSL certificates
+3. **HTTP → HTTPS** redirection is enforced globally
+4. **Certificates auto-renew** via Cron/systemd timers
+
+Access your application at:
+🌐 `https://<your-domain>.duckdns.org`
 
 ---
 
@@ -128,36 +187,73 @@ pytest
 
 ```
 fastapi-async-beyond-crud/
-│
 ├── alembic.ini
-├── compose.yml
+├── docker-compose.yml
+├── Dockerfile
+├── migrations/
+│   ├── env.py
+│   ├── README
+│   ├── script.py.mako
+│   └── versions/
+│       ├── 11d1f79aef4d_add_users.py
+│       ├── a04d79012711_add_tags_table.py
+│       ├── dba4f311e944_add_review_table.py
+│       └── __pycache__/
+│
+├── notes.txt
+├── poetry.lock
+├── pyproject.toml
 ├── requirements.txt
 ├── runworker.sh
-├── Dockerfile
-├── .env.example
+├── README.md
 │
-├── src/
-│   ├── auth/              # Authentication and JWT logic
-│   ├── db/                # Database models and connection
-│   ├── mail/              # Email templates and Celery tasks
-│   ├── routes/            # API endpoints
-│   ├── core/              # Config and constants
-│   └── main.py            # App entry point
-│
-└── migrations/            # Alembic migration files
+└── src/
+    ├── auth/
+    │   ├── dependencies.py
+    │   ├── routes.py
+    │   ├── schemas.py
+    │   ├── service.py
+    │   └── utils.py
+    │
+    ├── books/
+    │   ├── routes.py
+    │   ├── schemas.py
+    │   └── service.py
+    │
+    ├── reviews/
+    │   ├── routes.py
+    │   ├── schemas.py
+    │   └── service.py
+    │
+    ├── tags/
+    │   ├── routes.py
+    │   ├── schemas.py
+    │   └── service.py
+    │
+    ├── db/
+    │   ├── main.py
+    │   ├── models.py
+    │   └── redis.py
+    │
+    ├── celery_tasks.py
+    ├── config.py
+    ├── errors.py
+    ├── mail.py
+    ├── main.py
+    ├── middleware.py
+    └── __init__.py
 ```
 
 ---
 
 ## 🤝 Contributing
 
-Contributions, suggestions, and improvements are welcome!
+Contributions and improvements are always welcome!
 
-Fork the repo and create a PR:
+Fork the repository and create a PR here:
 👉 [https://github.com/kuldeepghorpade05/fastapi-async-beyond-crud](https://github.com/kuldeepghorpade05/fastapi-async-beyond-crud)
 
 ---
 
-### ⭐ If you find this project helpful, give it a star on GitHub!
-
+### ⭐ If you found this project helpful, please consider giving it a **star** on GitHub!
 
