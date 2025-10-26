@@ -32,6 +32,7 @@ This version of **FastAPI Async Beyond CRUD** is optimized for **production envi
 * 📦 **Poetry** for dependency management
 * ☁️ Hosted on **AWS EC2**
 * 🌐 Domain handled by **DuckDNS**
+* 🧪 **Postman** and **Swagger UI** used for API testing — Swagger comes auto-configured with **FastAPI**
 
 ---
 
@@ -45,6 +46,7 @@ This version of **FastAPI Async Beyond CRUD** is optimized for **production envi
 * 🌐 **Nginx + Certbot** for secure HTTPS deployment
 * ☁️ **AWS EC2** hosting with **DuckDNS** domain support
 * 🧰 **Poetry** for dependency and environment management
+* 🧪 **Postman + Swagger UI** for API testing and documentation
 
 ---
 
@@ -62,6 +64,7 @@ This version of **FastAPI Async Beyond CRUD** is optimized for **production envi
 | **Dependency Manager** | Poetry                  |
 | **Hosting**            | AWS EC2                 |
 | **Domain**             | DuckDNS                 |
+| **API Testing**        | Swagger UI + Postman    |
 
 ---
 
@@ -134,7 +137,7 @@ uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 Access at:
-👉 [http://localhost:8000/docs](http://localhost:8000/docs)
+👉 [http://localhost:8000/docs](http://localhost:8000/docs) (Swagger UI auto-configured by FastAPI)
 
 ---
 
