@@ -11,7 +11,8 @@ env/
 
 # Environment files
 .env
-.env.*
+!.env.example
+
 
 # Build & cache
 *.log
@@ -20,13 +21,3 @@ dist/
 build/
 .cache/
 .pytest_cache/
-
-# IDEs & editors
-.vscode/
-.idea/
-
-# Node (optional frontend or assets)
-node_modules/
-
-# Misc
-.DS_Store
