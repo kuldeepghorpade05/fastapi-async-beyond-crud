@@ -61,12 +61,7 @@ async def delete_review(
     current_user: User = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
 ):
-    deleted = await review_service.delete_review_to_from_book(
+    await review_service.delete_review_to_from_book(
         review_uid=review_uid, user_email=current_user.email, session=session
     )
-    if not deleted:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Review with UID {review_uid} not found or not owned by user"
-        )
     return None

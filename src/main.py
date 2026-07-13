@@ -18,11 +18,16 @@ app = FastAPI(
 )
 
 
+from src.errors import register_all_errors
+
 # Include routers
 app.include_router(auth_router, prefix="/api/v1/auth")
 app.include_router(book_router, prefix="/api/v1/books")
 app.include_router(review_router, prefix="/api/v1/reviews")
 app.include_router(tags_router, prefix="/api/v1/tags")
+
+# Register custom error handlers
+register_all_errors(app)
 
 # Root endpoint
 @app.get("/")
